@@ -51,23 +51,29 @@ def main():
         stopwords.add(word)
     col_name = ['id', 'words']
     book_words = []
+    book_id = []
     #print(book_tag)
     for _,book in tqdm(book_tag.iterrows(), total=book_tag.shape[0], leave=False):
         bookline = word_seg(book["Tags"])
         key_words = bookline.tags_set
         key_words = key_words - stopwords
         book_words.append({'id': book["Book"], 'words': key_words})
+        book_id.append(book["Book"])
     pd.DataFrame(book_words,columns=col_name).to_csv("data/book_words.csv", index=False)
+    pd.DataFrame(book_id).to_csv("data/book_id.csv", index=False,header=False)
     print("split book finish!")
     movie_tag = pd.read_csv("selected_movie_top_1200_data_tag.csv")
     col_name = ['id', 'words']
     movie_words = []
+    movie_id = []
     for _,movie in tqdm(movie_tag.iterrows(), total=movie_tag.shape[0], leave=False):
         movieline = word_seg(movie["Tags"])
         key_words = movieline.tags_set
         key_words = key_words - stopwords
         movie_words.append({'id': movie['Movie'], 'words': key_words})
+        movie_id.append(movie["Movie"])
     pd.DataFrame(movie_words,columns=col_name).to_csv("data/movie_words.csv", index=False)
+    pd.DataFrame(movie_id).to_csv("data/movie_id.csv", index=False,header=False)
     with open("data/word_dict.pkl", "wb") as f:
         pickle.dump(word_dict,f)
     print("split movie finish!")

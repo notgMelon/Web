@@ -1,5 +1,6 @@
 import pandas as pd
-
+import ast
+import math
 
 def read_csv():
     book_data = pd.read_csv("data/book_words.csv", dtype={'id': int, 'words': str})
@@ -8,8 +9,8 @@ def read_csv():
     words_all_book = set()
     book = dict()
     for i in range(len(data)):
-        words_a_book = eval(data['words'][i])
-        book[data['id'][i]] = words_a_book
+        words_a_book = ast.literal_eval(data['words'][i])
+        book[int(data['id'][i])] = words_a_book
         words_all_book = words_all_book.union(words_a_book)
 
     movie_data = pd.read_csv("data/movie_words.csv", dtype={'id': int, 'words': str})
@@ -17,8 +18,8 @@ def read_csv():
     words_all_movie = set()
     movie = dict()
     for i in range(len(data)):
-        words_a_movie = eval(data['words'][i])
-        movie[data['id'][i]] = words_a_movie
+        words_a_movie = ast.literal_eval(data['words'][i])
+        movie[int(data['id'][i])] = words_a_movie
         words_all_movie = words_all_movie.union(words_a_movie)
 
     return words_all_book, book, words_all_movie, movie
@@ -36,14 +37,18 @@ def gen_invert_table():
                 temp.append(j)
 
         temp_sorted = sorted(temp)
-        len1 = len(temp_sorted)
-        if len1 == 1 or len1 == 2:
-            for i in range(len1):
+        L = len(temp_sorted)
+        step = math.ceil(math.sqrt(L))  # 计算跳表的间隔
+        loc = 0
+        if L <= 3:
+            for i in range(L):
                 skip_table.append({'index': None, 'value': None})
         else:
-            for i in range(len1):
-                if i % 2 == 0 and i < len1 - 2:
-                    skip_table.append({'index': i + 2, 'value': temp_sorted[i + 2]})
+            for i in range(L):
+                if i == loc and i + step < L:
+                    #按一定间隔均匀分布跳表指针
+                    skip_table.append({'index': i + step, 'value': temp_sorted[i + step]})
+                    loc = i+step
                 else:
                     skip_table.append({'index': None, 'value': None})
 
@@ -60,14 +65,18 @@ def gen_invert_table():
                 temp.append(j)
 
         temp_sorted = sorted(temp)
-        len1 = len(temp_sorted)
-        if len1 == 1 or len1 == 2:
-            for i in range(len1):
+        L = len(temp_sorted)
+        step = math.ceil(math.sqrt(L))  # 计算跳表的间隔
+        loc = 0
+        if L <= 3:
+            for i in range(L):
                 skip_table.append({'index': None, 'value': None})
         else:
-            for i in range(len1):  # 0 1 2 3 4
-                if i % 2 == 0 and i < len1 - 2:
-                    skip_table.append({'index': i + 2, 'value': temp_sorted[i + 2]})
+            for i in range(L):  # 0 1 2 3 4
+                if i == loc and i + step < L:
+                    #按一定间隔均匀分布跳表指针
+                    skip_table.append({'index': i + step, 'value': temp_sorted[i + step]})
+                    loc = i+step
                 else:
                     skip_table.append({'index': None, 'value': None})
 
