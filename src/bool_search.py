@@ -2,7 +2,10 @@ import csv
 import pandas as pd
 import math
 from time import time
+import ast
 
+# 选择是否使用优化过的倒排表
+is_opti = 0
 # 生成对应的 id 列表的倒排表和跳表指针
 def generate_table(data: list):
     skip_table = []
@@ -171,24 +174,58 @@ def bool_operator(sentence: str, data, id_all):
 
 def get_data(file_name: str) -> dict:
     data_dic = {}
-    with open(file_name, mode="r", encoding="utf8") as f:
-        f_reader = csv.reader(f)
-        next(f_reader)
-        for row_line in f_reader:
-            data_dic[row_line[0]] = (eval(row_line[1]), eval(row_line[2]))
+    if is_opti == 0:
+        with open(file_name, mode="r", encoding="utf8") as f:
+            f_reader = csv.reader(f)
+            next(f_reader)
+            for row_line in f_reader:
+                data_dic[row_line[0]] = (eval(row_line[1]), eval(row_line[2]))
+    else:
+        df = pd.read_csv(file_name)
+        word_list = df['word'].tolist()
+        id_lists = df['id_list'].tolist()
+        table_list = df['skip_table'].tolist()
+        word_file = ""
+        if 'book' in file_name:
+            word_file = 'data/book_invert_opti_word.txt'
+        else:
+            word_file = 'data/movie_invert_opti_word.txt'
+        with open(word_file, 'r', encoding='utf-8') as file:
+            id_string = file.read()
+        for i in range(len(word_list)-1):
+            id_list = ast.literal_eval(id_lists[i])
+            skip_list = ast.literal_eval(table_list[i])
+            if len(id_list) > 1 :
+                for j in range(len(id_list) - 2):  # 恢复倒排索引
+                    id_list[j + 1] = id_list[j] + id_list[j + 1]
+            # 获取词项
+            if word_list[i] == len(word_list)-1:
+                word = id_string
+            else:
+                cut = word_list[i+1]-word_list[i]
+                word = id_string[:cut]
+                id_string = id_string[cut:]
+            data_dic[word] = (id_list, skip_list)
     return data_dic
 
 
 if __name__ == '__main__':
     print("read data, please wait a moment...")
-    filename_book = "data/book_invert.csv"
-    filename_movie = "data/movie_invert.csv"
+    if is_opti == 0:
+        filename_book = "data/book_invert.csv"
+        filename_movie = "data/movie_invert.csv"
+    else:
+        filename_book = "data/book_invert_opti.csv"
+        filename_movie = "data/movie_invert_opti.csv"
+    start_time = time()
     movie_id_series = pd.read_csv("data/movie_id.csv").squeeze()
     movie_id_all = movie_id_series.tolist()
     book_id_series = pd.read_csv("data/book_id.csv").squeeze()
     book_id_all = book_id_series.tolist()
     data_book = get_data(filename_book)
     data_movie = get_data(filename_movie)
+    end_time = time()
+    print("初始化花费时间为%fs"%(end_time-start_time))
     choice = int(input("选择查询类型( “1”查询书籍 “2”查询电影)\n"))
     if choice == 1:
         sentence = input("查询书籍, 请输入查询条件\n")
